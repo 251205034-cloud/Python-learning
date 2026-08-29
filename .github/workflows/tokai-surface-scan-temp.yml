@@ -1,0 +1,35 @@
+name: Temporary Tokai Terrain Scan
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - tokai_scan_temp/scan.py
+      - tokai_scan_temp/requirements.txt
+      - .github/workflows/tokai-surface-scan-temp.yml
+
+permissions:
+  contents: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: python -m pip install --upgrade pip && pip install -r tokai_scan_temp/requirements.txt
+      - run: python tokai_scan_temp/scan.py
+      - name: Commit generated results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f tokai_scan_temp/out tokai_scan_temp/tokai_scan_results.zip
+          git commit -m "Add temporary Tokai scan results" || exit 0
+          git push
